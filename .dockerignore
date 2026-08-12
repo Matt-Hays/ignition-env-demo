@@ -1,0 +1,14 @@
+**
+!docker/
+docker/*
+!docker/ignition/
+docker/ignition/*
+!docker/ignition/Dockerfile
+!docker/ignition/context-check.Dockerfile
+!artifacts/
+artifacts/*
+!artifacts/downloads/
+artifacts/downloads/*
+!artifacts/downloads/mqtt-transmission-4.0.36.modl
+!artifacts/downloads/mqtt-distributor-4.0.36.modl
+!artifacts/downloads/mqtt-engine-4.0.36.modl

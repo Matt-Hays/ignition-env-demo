@@ -1,0 +1,35 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+README.original.md
+
+# Local configuration and credentials. Never commit generated secret files,
+# private keys, certificates containing private material, or token exports.
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+*.kdbx
+id_rsa
+id_ed25519
+credentials.json
+*credentials*.json
+*.token
+
+# Downloaded, generated, and recovery artifacts.
+artifacts/downloads/
+artifacts/backups/
+artifacts/test-output/
+
+# Local-only supporting material. Existing tracked copies are intentionally
+# retained; these rules affect only future untracked files.
+PROJECT_AUDIT_LOG.md
+docs/
+scripts/
+artifacts/images.lock
+secrets/README.md
+docker/ignition/context-check.Dockerfile
+docker/utility/probe.py
+docker/utility/test_generate_secrets.py

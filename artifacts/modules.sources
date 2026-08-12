@@ -1,0 +1,9 @@
+# Cirrus Link 4.0.36 source record — reviewed 2026-08-03
+# Compatibility: Ignition 8.1.33 through 8.1.54.
+# Official compatibility page:
+# https://docs.chariot.io/display/CLD80/Ignition%2BCompatibility%2Bwith%2BCirrus%2BLink%2BModules
+# Official release bundle page:
+# https://inductiveautomation.com/downloads/third-party-modules/8.1.54
+mqtt-transmission-4.0.36.modl | MQTT Transmission | 4.0.36 | https://releases.inductiveautomation.com/third-party/cirrus-link/4.0.36/MQTT-Transmission-signed.modl
+mqtt-distributor-4.0.36.modl | MQTT Distributor | 4.0.36 | https://releases.inductiveautomation.com/third-party/cirrus-link/4.0.36/MQTT-Distributor-signed.modl
+mqtt-engine-4.0.36.modl | MQTT Engine | 4.0.36 | https://releases.inductiveautomation.com/third-party/cirrus-link/4.0.36/MQTT-Engine-signed.modl

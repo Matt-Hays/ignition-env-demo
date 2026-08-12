@@ -1,0 +1,4 @@
+# Format: canonical filename | bytes | sha256 | upstream filename | direct source URL | checksum provenance
+mqtt-transmission-4.0.36.modl | 32696565 | bc08e2e5195add832c0f5ced9aa90f2afd3466185829a42b50133f8ba500f3df | MQTT-Transmission-signed.modl | https://releases.inductiveautomation.com/third-party/cirrus-link/4.0.36/MQTT-Transmission-signed.modl | locally pinned from official signed module
+mqtt-distributor-4.0.36.modl | 42168452 | 5470cb507d4baf87a9ce2e5b5580251e01cf65cf893f10b4c5364a02f9b0d771 | MQTT-Distributor-signed.modl | https://releases.inductiveautomation.com/third-party/cirrus-link/4.0.36/MQTT-Distributor-signed.modl | locally pinned from official signed module
+mqtt-engine-4.0.36.modl | 51687497 | ee26a783f1dc8c9dad38cefa4967089754673d2b720ea1c0409bc29eb372814b | MQTT-Engine-signed.modl | https://releases.inductiveautomation.com/third-party/cirrus-link/4.0.36/MQTT-Engine-signed.modl | locally pinned from official signed module

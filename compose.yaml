@@ -1,0 +1,207 @@
+name: ignition-feasibility
+
+x-gateway-common: &gateway-common
+  restart: unless-stopped
+  environment:
+    ACCEPT_IGNITION_EULA: "Y"
+    IGNITION_EDITION: standard
+    TZ: ${TZ:-UTC}
+    DISABLE_QUICKSTART: "true"
+    GATEWAY_NETWORK_ENABLED: "false"
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  primary-ignition:
+    <<: *gateway-common
+    image: ignition-feasibility/primary:8.1.54
+    build:
+      context: .
+      dockerfile: docker/ignition/Dockerfile
+      args:
+        MODULE_FILE: artifacts/downloads/mqtt-transmission-4.0.36.modl
+    hostname: primary-ignition
+    command: ["-n", "Ignition-Primary", "-m", "1024"]
+    ports: ["127.0.0.1:${PRIMARY_HTTP_PORT:-9088}:8088"]
+    environment:
+      ACCEPT_IGNITION_EULA: "Y"
+      IGNITION_EDITION: standard
+      TZ: ${TZ:-UTC}
+      DISABLE_QUICKSTART: "true"
+      GATEWAY_NETWORK_ENABLED: "false"
+      GATEWAY_ADMIN_USERNAME: primary-admin
+      GATEWAY_ADMIN_PASSWORD_FILE: /run/secrets/primary-admin-password
+      GATEWAY_ENCODING_KEY_FILE: /run/secrets/primary-encoding-key
+      GATEWAY_MODULES_ENABLED: perspective,tag-historian
+    volumes:
+      - primary-gateway-data:/usr/local/bin/ignition/data
+      - ./artifacts/backups/gateway/primary:/backups
+    networks: [primary-db, primary-publish]
+    secrets: [primary-admin-password, primary-encoding-key]
+    mem_limit: 2g
+
+  mqtt-ignition:
+    <<: *gateway-common
+    image: ignition-feasibility/mqtt:8.1.54
+    build:
+      context: .
+      dockerfile: docker/ignition/Dockerfile
+      args:
+        MODULE_FILE: artifacts/downloads/mqtt-distributor-4.0.36.modl
+    hostname: mqtt-ignition
+    command: ["-n", "Ignition-MQTT", "-m", "768"]
+    ports: ["127.0.0.1:${MQTT_HTTP_PORT:-9188}:8088"]
+    environment:
+      ACCEPT_IGNITION_EULA: "Y"
+      IGNITION_EDITION: standard
+      TZ: ${TZ:-UTC}
+      DISABLE_QUICKSTART: "true"
+      GATEWAY_NETWORK_ENABLED: "false"
+      GATEWAY_ADMIN_USERNAME: mqtt-admin
+      GATEWAY_ADMIN_PASSWORD_FILE: /run/secrets/mqtt-admin-password
+      GATEWAY_ENCODING_KEY_FILE: /run/secrets/mqtt-encoding-key
+    volumes:
+      - mqtt-gateway-data:/usr/local/bin/ignition/data
+      - ./artifacts/backups/gateway/mqtt:/backups
+    networks: [primary-publish, mqtt-subscribe]
+    secrets: [mqtt-admin-password, mqtt-encoding-key]
+    mem_limit: 1g
+
+  development-ignition:
+    <<: *gateway-common
+    image: ignition-feasibility/downstream:8.1.54
+    build:
+      context: .
+      dockerfile: docker/ignition/Dockerfile
+      args:
+        MODULE_FILE: artifacts/downloads/mqtt-engine-4.0.36.modl
+    hostname: development-ignition
+    command: ["-n", "Ignition-Development", "-m", "768"]
+    ports: ["127.0.0.1:${DEVELOPMENT_HTTP_PORT:-9288}:8088"]
+    environment:
+      ACCEPT_IGNITION_EULA: "Y"
+      IGNITION_EDITION: standard
+      TZ: ${TZ:-UTC}
+      DISABLE_QUICKSTART: "true"
+      GATEWAY_NETWORK_ENABLED: "false"
+      GATEWAY_ADMIN_USERNAME: development-admin
+      GATEWAY_ADMIN_PASSWORD_FILE: /run/secrets/development-admin-password
+      GATEWAY_ENCODING_KEY_FILE: /run/secrets/development-encoding-key
+      GATEWAY_MODULES_ENABLED: perspective
+    volumes:
+      - development-gateway-data:/usr/local/bin/ignition/data
+      - ./artifacts/backups/gateway/development:/backups
+    networks: [mqtt-subscribe]
+    secrets: [development-admin-password, development-encoding-key]
+    mem_limit: 1g
+
+  test-ignition:
+    <<: *gateway-common
+    image: ignition-feasibility/downstream:8.1.54
+    hostname: test-ignition
+    command: ["-n", "Ignition-Test", "-m", "768"]
+    ports: ["127.0.0.1:${TEST_HTTP_PORT:-9388}:8088"]
+    environment:
+      ACCEPT_IGNITION_EULA: "Y"
+      IGNITION_EDITION: standard
+      TZ: ${TZ:-UTC}
+      DISABLE_QUICKSTART: "true"
+      GATEWAY_NETWORK_ENABLED: "false"
+      GATEWAY_ADMIN_USERNAME: test-admin
+      GATEWAY_ADMIN_PASSWORD_FILE: /run/secrets/test-admin-password
+      GATEWAY_ENCODING_KEY_FILE: /run/secrets/test-encoding-key
+      GATEWAY_MODULES_ENABLED: perspective
+    volumes:
+      - test-gateway-data:/usr/local/bin/ignition/data
+      - ./artifacts/backups/gateway/test:/backups
+    networks: [mqtt-subscribe]
+    secrets: [test-admin-password, test-encoding-key]
+    mem_limit: 1g
+
+  mysql:
+    image: mysql:8.4.10@sha256:8dbcf531a03aade657e181b9cf2f1d1803ce621a1d55610cb44cb531ab7d7db6
+    hostname: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ignition_historian
+      MYSQL_USER: ignition_primary
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql-primary-password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql-root-password
+      TZ: ${TZ:-UTC}
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci", "--default-time-zone=+00:00"]
+    volumes: ["mysql-data:/var/lib/mysql"]
+    networks: [primary-db]
+    secrets: [mysql-root-password, mysql-primary-password]
+    mem_limit: 1g
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$(cat /run/secrets/mysql-root-password)\" mysql -uroot -e 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 60s
+
+  probe-primary:
+    image: ignition-feasibility/utility:1
+    profiles: [validation]
+    networks: [primary-db, primary-publish]
+    command: ["python3", "/app/probe.py", "--allow", "mysql:3306", "--allow", "mqtt-ignition:8088", "--deny", "development-ignition:8088", "--deny", "test-ignition:8088"]
+
+  probe-development:
+    image: ignition-feasibility/utility:1
+    profiles: [validation]
+    networks: [mqtt-subscribe]
+    command: ["python3", "/app/probe.py", "--allow", "mqtt-ignition:8088", "--deny", "primary-ignition:8088", "--deny", "mysql:3306"]
+
+  probe-test:
+    image: ignition-feasibility/utility:1
+    profiles: [validation]
+    networks: [mqtt-subscribe]
+    command: ["python3", "/app/probe.py", "--allow", "mqtt-ignition:8088", "--deny", "primary-ignition:8088", "--deny", "mysql:3306"]
+
+  mysql-backup:
+    image: mysql:8.4.10@sha256:8dbcf531a03aade657e181b9cf2f1d1803ce621a1d55610cb44cb531ab7d7db6
+    profiles: [maintenance]
+    networks: [primary-db]
+    secrets: [mysql-root-password]
+    volumes: ["./artifacts/backups/mysql:/backups"]
+    command: ["sh", "-ec", "f=$${MYSQL_BACKUP_FILE:?}; case \"$$f\" in ''|/*|*/*|*\\\\*|*..*) exit 64 ;; esac; case \"$$f\" in mysql-*.sql) ;; *) exit 64 ;; esac; test ! -e /backups/\"$$f\"; export MYSQL_PWD=\"$$(cat /run/secrets/mysql-root-password)\"; umask 077; mysqldump -h mysql -uroot --single-transaction ignition_historian > /backups/\"$$f\"; test -s /backups/\"$$f\""]
+
+  mysql-restore:
+    image: mysql:8.4.10@sha256:8dbcf531a03aade657e181b9cf2f1d1803ce621a1d55610cb44cb531ab7d7db6
+    profiles: [maintenance]
+    networks: [primary-db]
+    secrets: [mysql-root-password]
+    volumes: ["./artifacts/backups/mysql:/backups:ro"]
+    command: ["sh", "-ec", "f=$${MYSQL_RESTORE_FILE:?}; case \"$$f\" in ''|/*|*/*|*..*) exit 64 ;; *.sql) ;; *) exit 64 ;; esac; test -f /backups/\"$$f\"; export MYSQL_PWD=\"$$(cat /run/secrets/mysql-root-password)\"; mysql -h mysql -uroot ignition_historian < /backups/\"$$f\""]
+
+networks:
+  primary-db: {}
+  primary-publish: {}
+  mqtt-subscribe: {}
+
+volumes:
+  primary-gateway-data: {}
+  mqtt-gateway-data: {}
+  development-gateway-data: {}
+  test-gateway-data: {}
+  mysql-data: {}
+
+secrets:
+  primary-admin-password: {file: ./secrets/primary-admin-password.txt}
+  mqtt-admin-password: {file: ./secrets/mqtt-admin-password.txt}
+  development-admin-password: {file: ./secrets/development-admin-password.txt}
+  test-admin-password: {file: ./secrets/test-admin-password.txt}
+  primary-encoding-key: {file: ./secrets/primary-encoding-key.txt}
+  mqtt-encoding-key: {file: ./secrets/mqtt-encoding-key.txt}
+  development-encoding-key: {file: ./secrets/development-encoding-key.txt}
+  test-encoding-key: {file: ./secrets/test-encoding-key.txt}
+  mysql-root-password: {file: ./secrets/mysql-root-password.txt}
+  mysql-primary-password: {file: ./secrets/mysql-primary-password.txt}
