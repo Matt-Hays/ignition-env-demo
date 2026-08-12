@@ -25,7 +25,7 @@ services:
         MODULE_FILE: artifacts/downloads/mqtt-transmission-4.0.36.modl
     hostname: primary-ignition
     command: ["-n", "Ignition-Primary", "-m", "1024"]
-    ports: ["127.0.0.1:${PRIMARY_HTTP_PORT:-9088}:8088"]
+    ports: ["${PRIMARY_HTTP_PORT:-9088}:8088"]
     environment:
       ACCEPT_IGNITION_EULA: "Y"
       IGNITION_EDITION: standard
@@ -53,7 +53,7 @@ services:
         MODULE_FILE: artifacts/downloads/mqtt-distributor-4.0.36.modl
     hostname: mqtt-ignition
     command: ["-n", "Ignition-MQTT", "-m", "768"]
-    ports: ["127.0.0.1:${MQTT_HTTP_PORT:-9188}:8088"]
+    ports: ["${MQTT_HTTP_PORT:-9188}:8088"]
     environment:
       ACCEPT_IGNITION_EULA: "Y"
       IGNITION_EDITION: standard
@@ -80,7 +80,7 @@ services:
         MODULE_FILE: artifacts/downloads/mqtt-engine-4.0.36.modl
     hostname: development-ignition
     command: ["-n", "Ignition-Development", "-m", "768"]
-    ports: ["127.0.0.1:${DEVELOPMENT_HTTP_PORT:-9288}:8088"]
+    ports: ["${DEVELOPMENT_HTTP_PORT:-9288}:8088"]
     environment:
       ACCEPT_IGNITION_EULA: "Y"
       IGNITION_EDITION: standard
@@ -103,7 +103,7 @@ services:
     image: ignition-feasibility/downstream:8.1.54
     hostname: test-ignition
     command: ["-n", "Ignition-Test", "-m", "768"]
-    ports: ["127.0.0.1:${TEST_HTTP_PORT:-9388}:8088"]
+    ports: ["${TEST_HTTP_PORT:-9388}:8088"]
     environment:
       ACCEPT_IGNITION_EULA: "Y"
       IGNITION_EDITION: standard
