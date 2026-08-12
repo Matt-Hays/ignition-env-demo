@@ -34,7 +34,7 @@ or automated configuration import.
   [`artifacts/modules.sources`](artifacts/modules.sources), plus authority to
   download and accept the associated licenses.
 - `shasum` (included with macOS and most Linux distributions). The commands
-  below use Docker's pinned Python image, so a host Python installation is not
+  below use Docker's Python image, so a host Python installation is not
   required.
 
 ## 1. Clone and prepare local-only directories
@@ -102,14 +102,15 @@ Do not put passwords or encoding keys in `.env`.
 
 Compose requires ten local secret files before the four Gateways and MySQL can
 be initialized. The following command uses the retained generator directly in
-a pinned Python container; it creates mode-0600 files and never prints values.
-Run it once in a new clone. It refuses to overwrite an existing file.
+the Python container; it creates mode-0600 files and never prints values. Run
+it once in a new clone. It refuses to overwrite an existing file.
 
 ```sh
 docker run --rm --network none --cap-drop ALL \
+  --user "$(id -u):$(id -g)" \
   --mount type=bind,src="$PWD/docker/utility",dst=/app,readonly \
   --mount type=bind,src="$PWD/secrets",dst=/workspace/secrets \
-  python:3.13.14-slim-bookworm@sha256:9d7f287598e1a5a978c015ee176d8216435aaf335ed69ac3c38dd1bbb10e8d64 \
+  python:3.13.14-slim-bookworm \
   python /app/generate_secrets.py --output /workspace/secrets
 ```
 
@@ -125,30 +126,33 @@ masked Gateway field.
 ## 3. Download and verify the signed modules
 
 Download each signed module into `artifacts/downloads/`. These commands use
-the same pinned Python image and the retained download helper. They need network
-access because the modules come from the official Cirrus Link release URLs.
+the retained download helper. They need network access because the modules come
+from the official Cirrus Link release URLs.
 
 ```sh
 docker run --rm --cap-drop ALL \
+  --user "$(id -u):$(id -g)" \
   --mount type=bind,src="$PWD/docker/utility",dst=/app,readonly \
   --mount type=bind,src="$PWD/artifacts/downloads",dst=/workspace/downloads \
-  python:3.13.14-slim-bookworm@sha256:9d7f287598e1a5a978c015ee176d8216435aaf335ed69ac3c38dd1bbb10e8d64 \
+  python:3.13.14-slim-bookworm \
   python /app/fetch_modules.py \
   --url https://releases.inductiveautomation.com/third-party/cirrus-link/4.0.36/MQTT-Transmission-signed.modl \
   --output /workspace/downloads/mqtt-transmission-4.0.36.modl
 
 docker run --rm --cap-drop ALL \
+  --user "$(id -u):$(id -g)" \
   --mount type=bind,src="$PWD/docker/utility",dst=/app,readonly \
   --mount type=bind,src="$PWD/artifacts/downloads",dst=/workspace/downloads \
-  python:3.13.14-slim-bookworm@sha256:9d7f287598e1a5a978c015ee176d8216435aaf335ed69ac3c38dd1bbb10e8d64 \
+  python:3.13.14-slim-bookworm \
   python /app/fetch_modules.py \
   --url https://releases.inductiveautomation.com/third-party/cirrus-link/4.0.36/MQTT-Distributor-signed.modl \
   --output /workspace/downloads/mqtt-distributor-4.0.36.modl
 
 docker run --rm --cap-drop ALL \
+  --user "$(id -u):$(id -g)" \
   --mount type=bind,src="$PWD/docker/utility",dst=/app,readonly \
   --mount type=bind,src="$PWD/artifacts/downloads",dst=/workspace/downloads \
-  python:3.13.14-slim-bookworm@sha256:9d7f287598e1a5a978c015ee176d8216435aaf335ed69ac3c38dd1bbb10e8d64 \
+  python:3.13.14-slim-bookworm \
   python /app/fetch_modules.py \
   --url https://releases.inductiveautomation.com/third-party/cirrus-link/4.0.36/MQTT-Engine-signed.modl \
   --output /workspace/downloads/mqtt-engine-4.0.36.modl
@@ -218,9 +222,10 @@ Generate the credentials for the three manually configured MQTT identities:
 
 ```sh
 docker run --rm --network none --cap-drop ALL \
+  --user "$(id -u):$(id -g)" \
   --mount type=bind,src="$PWD/docker/utility",dst=/app,readonly \
   --mount type=bind,src="$PWD/secrets",dst=/workspace/secrets \
-  python:3.13.14-slim-bookworm@sha256:9d7f287598e1a5a978c015ee176d8216435aaf335ed69ac3c38dd1bbb10e8d64 \
+  python:3.13.14-slim-bookworm \
   python /app/generate_secrets.py --output /workspace/secrets \
   --only mqtt-primary-transmission-password \
   --only mqtt-development-engine-password \
