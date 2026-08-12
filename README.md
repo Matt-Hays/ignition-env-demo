@@ -191,7 +191,7 @@ Gateway HTTP endpoints. Press `Ctrl-C` if an endpoint does not become ready and
 inspect `docker compose logs <service>` before continuing.
 
 ```sh
-for port in 9088 9188 9288 9388; do
+for port in 19088 19188 19288 19388; do
   until curl --fail --silent --show-error "http://127.0.0.1:${port}/StatusPing"; do
     sleep 5
   done
@@ -206,10 +206,10 @@ The default browser addresses and administrator usernames are:
 
 | Gateway | Address | Username | Installed module |
 | --- | --- | --- | --- |
-| Primary | <http://127.0.0.1:9088> | `primary-admin` | MQTT Transmission |
-| MQTT | <http://127.0.0.1:9188> | `mqtt-admin` | MQTT Distributor |
-| Development | <http://127.0.0.1:9288> | `development-admin` | MQTT Engine |
-| Test | <http://127.0.0.1:9388> | `test-admin` | MQTT Engine |
+| Primary | <http://127.0.0.1:19088> | `primary-admin` | MQTT Transmission |
+| MQTT | <http://127.0.0.1:19188> | `mqtt-admin` | MQTT Distributor |
+| Development | <http://127.0.0.1:19288> | `development-admin` | MQTT Engine |
+| Test | <http://127.0.0.1:19388> | `test-admin` | MQTT Engine |
 
 Sign in to every Gateway using the matching locally generated
 `*-admin-password.txt` file. On each fresh or rebuilt Gateway, accept the
