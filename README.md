@@ -291,10 +291,18 @@ On Primary, create a MySQL connection named `MySQL_Historian_DB` with:
 
 | Field | Value |
 | --- | --- |
-| Host | `mysql:3306` |
+| Driver | `MariaDB` |
+| Connect URL | `jdbc:mariadb://mysql:3306/ignition_historian?allowPublicKeyRetrieval=true` |
 | Database | `ignition_historian` |
 | Username | `ignition_primary` |
 | Password | locally read `mysql-primary-password.txt` |
+
+The `allowPublicKeyRetrieval=true` option is required for this MySQL 8
+container's `caching_sha2_password` authentication when the MariaDB JDBC driver
+connects without TLS. It is acceptable only because this feasibility demo keeps
+MySQL private to its Docker network. A production deployment should use TLS and
+certificate validation instead of public-key retrieval over an unencrypted
+connection.
 
 Create the `Demo_History` tag history provider using that connection. Then
 create exactly six direct application tags at `Demo/Pump01`, with no child
